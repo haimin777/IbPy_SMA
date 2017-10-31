@@ -1,0 +1,3 @@
+Python 3
+IbPy  библиотека  https://github.com/blampe/IbPy 
+Рабочая станция https://www.interactivebrokers.com/en/index.php?f=14099#tws-software
