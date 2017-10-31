@@ -9,7 +9,6 @@ from ib.ext.Contract import Contract
 from ib.ext.Order import Order
 from ib.opt import Connection, message
 import time
-import pandas as pd
 
 
 class AccountIB:
@@ -20,18 +19,23 @@ class AccountIB:
         self.tws_conn = None
         self.account_code = None
         self.position = 0
-        self.balance = 0
+        self.balance = 1
         
     def server_handler(self, msg):
         print ("Server Msg:", msg.typeName, "-", msg)
-                    
+                  
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
+        elif msg.typeName == "updateAccountValue":    
             self.balance = msg.AvailableFunds
             
         elif msg.typeName == "error" and msg.id != -1:
             return
-    
+   
+    def monitor_position(self):
+        print ('Position:%s Bal:%s' % (self.position,
+                                               self.balance))
+
     def connect_to_tws(self):
         self.tws_conn = Connection.create(port=self.port,
                                           clientId=self.client_id)
@@ -60,9 +64,14 @@ class AccountIB:
     def start(self):
         try:
             self.connect_to_tws()
+            sleep(5)
             self.register_callback_functions()
+            sleep(5)
             self.request_account_updates(self.account_code)
-            print("Acc Updated", self.balance)
+            sleep(15)
+            self.monitor_position()
+            sleep(5)
+           # print("Acc Updated", self.balance)
             
         finally:
             print ("disconnected")
