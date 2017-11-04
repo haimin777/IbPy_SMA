@@ -70,8 +70,7 @@ class AccountIB:
             self.request_account_updates(self.account_code)
             sleep(1)
             self.monitor_position()
-            sleep(1)
-            #print("Acc Updated", self.balance)
+            
            
             
         finally:
