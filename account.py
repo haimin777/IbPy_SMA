@@ -8,7 +8,7 @@ Created on Mon Oct 30 18:16:20 2017
 from ib.ext.Contract import Contract
 from ib.ext.Order import Order
 from ib.opt import Connection, message
-import datetime
+import time
 
 
 class AccountIB:
@@ -64,11 +64,11 @@ class AccountIB:
     def start(self):
         try:
             self.connect_to_tws()
-            sleep(1)
+            time. sleep(1)
             self.register_callback_functions()
-            sleep(1)
+            time.sleep(1)
             self.request_account_updates(self.account_code)
-            sleep(1)
+            time.sleep(1)
             self.monitor_position()
             
            
