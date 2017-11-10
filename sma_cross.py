@@ -97,7 +97,7 @@ try:
 
         print("sma long = ", ma_long, "sma short = ", ma_short)
         print(AccountIB.balance, AccountIB.position, "OrderId = ", OrderIB.order_ID)
-        sleep(10)
+        sleep(300) #время до следующего запуска скрипта
 finally:
     # Disconnect from TWS
     if tws is not None:
