@@ -7,7 +7,7 @@ Created on Mon Oct 30 18:16:20 2017
 
 from ib.ext.Contract import Contract
 from ib.ext.Order import Order
-from ib.opt import Connection, message
+from ib.opt import Connection, message, ibConnection
 import time
 
 
@@ -20,7 +20,7 @@ class AccountIB:
         self.account_code = None
         self.position = 0
         self.balance = 10
-        
+        self.order_ID = None
     def server_handler(self, msg):
        #print ("Server Msg:", msg.typeName, "-", msg)
                   
@@ -48,6 +48,7 @@ class AccountIB:
             
     def request_account_updates(self, account_code):
         self.tws_conn.reqAccountUpdates(True, account_code)
+
         
     def disconnect_from_tws(self):
         if self.tws_conn is not None:

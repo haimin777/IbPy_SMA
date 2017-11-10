@@ -7,10 +7,14 @@ Created on Mon Oct 30 17:34:25 2017
 
 from ib.opt import Connection
 
+
 def error_handler(msg):
     print ("Server Error:", msg)
+
+
 def server_handler(msg):
     print ("Server Msg:", msg.typeName, "-", msg)
+
 
 if __name__ == "__main__":
     client_id = 100
