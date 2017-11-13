@@ -1,2 +1,2 @@
-.idea
-__pycache__
+cat .idea
+cat __pycache__
