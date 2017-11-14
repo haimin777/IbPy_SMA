@@ -1,22 +1,18 @@
-chardet==3.0.4
-cycler==0.10.0
-decorator==4.1.2
-entrypoints==0.2.3
-IbPy2==0.8.0
-nbconvert==5.3.1
-nbformat==4.4.0
-notebook==5.2.0
-numpy==1.13.3
-pandas==0.21.0
-pandocfilters==1.4.2
-python-dateutil==2.6.1
-pytz==2017.3
-PyYAML==3.12
-pyzmq==16.0.3
-qtconsole==4.3.1
-scipy==1.0.0
-TA-Lib==0.4.10
-tradingWithPython==3.1.1.0
+IbPy2
+nbconvert
+nbformat
+notebook
+numpy
+pandas
+pandocfilters
+python-dateutil
+pytz
+PyYAML
+pyzmq
+qtconsole
+scipy
+TA-Lib
+tradingWithPython
 
 
 
