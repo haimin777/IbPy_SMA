@@ -1,18 +1,12 @@
 IbPy2
-nbconvert
-nbformat
-notebook
 numpy
 pandas
-pandocfilters
-python-dateutil
 pytz
 PyYAML
 pyzmq
-qtconsole
 scipy
 TA-Lib
-tradingWithPython
+
 
 
 
