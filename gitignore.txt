@@ -1,2 +1,3 @@
 cat .idea
 __pycache__
+.swp
