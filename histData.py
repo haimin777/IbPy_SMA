@@ -20,8 +20,10 @@ import os
 import datetime as dt
 import time
 from time import sleep
-from helpers import timeFormat, dateFormat
 
+
+timeFormat = "%Y%m%d %H:%M:%S"
+dateFormat = "%Y%m%d"
 
 class Downloader(object):
     def __init__(self, debug=False):
