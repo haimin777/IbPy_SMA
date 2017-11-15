@@ -6,7 +6,7 @@ Created on Mon Oct 30 18:16:20 2017
 """
 import time
 import histData  # через него получаем исторические данные как датафрейм
-from histData import Downloader
+
 from order import OrderIB
 # from account import AccountIB
 import talib
@@ -16,7 +16,7 @@ import datetime
 from time import sleep
 
 
-class AccountIB:
+class account_ib:
     def __init__(self, symbol, port=7496):
         self.client_id = 100
         self.symbol = symbol
@@ -29,7 +29,7 @@ class AccountIB:
         self.OpenOrders = 0
 
     def server_handler(self, msg):
-        print("Server Msg:", msg.typeName, "-", msg)
+        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -110,8 +110,8 @@ class AccountIB:
 
                 # Алгоритм системы
 
-                if allow == True and AccountIB.position == 0:  # начальная точка
-                    if AccountIB.OpenOrders != 0:
+                if allow == True and self.position == 0:  # начальная точка
+                    if self.OpenOrders != 0:
                         print("Open order detected")
 
                         sleep(10)
@@ -158,6 +158,6 @@ class AccountIB:
 
 
 if __name__ == "__main__":
-    system = AccountIB("EUR")
+    system = account_ib("EUR")
     system.start(10)
 
