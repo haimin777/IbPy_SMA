@@ -27,29 +27,62 @@ class account_ib:
         self.balance = 0
         self.order_ID = None
         self.OpenOrders = 0
+        self.statusOrder = None
+        self.list1_orders = []  #Открытые ордера: Тикер и цена
+        self.pos_list = []  # Активные позиции: тикер, размер позиции, рыночная стоимость, цена
+        self.list2_orders = list()  #Открытые ордера: Объем и статус
+        self.signal = None  #Предыдущее значение сигнала на вход
 
     def server_handler(self, msg):
         #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
+            self.pos_list.append(msg.contract.m_symbol)
+            self.pos_list.append(msg.position)
+            self.pos_list.append(msg.marketValue)
+            self.pos_list.append(msg.marketPrice)
+
 
         elif msg.typeName == "updateAccountValue" and msg.key == "LookAheadAvailableFunds-S":
             self.balance = msg.value
 
         elif msg.typeName == "orderStatus":
             self.OpenOrders = msg.remaining
+            self.statusOrder = msg.status
+
+            self.list2_orders.append(self.OpenOrders)
+            self.list2_orders.append(msg.status)
 
         elif msg.typeName == "nextValidId":
-            print("order ir = ", msg.orderId)
+            print("order id = ", msg.orderId)
             self.order_ID = msg.orderId
+
+        elif msg.typeName == "openOrder":
+
+            self.list1_orders.append(msg.contract.m_symbol)
+            self.list1_orders.append(msg.order.m_lmtPrice)
+
 
         elif msg.typeName == "error" and msg.id != -1:
             return
 
-    def monitor_position(self):
+    def monitor_position(self): # Отслеживаем открытые позиции и ордера
         print('Position:%s Bal:%s  Open orders:%s' % (self.position,
-                                                      self.balance, self.OpenOrders))
+                                                     self.balance, self.OpenOrders))
+
+        print("__________Open orders___________")
+        print()
+        for i in range(0,len(self.list1_orders),2):
+            print(self.list1_orders[i], self.list1_orders[i+1], self.list2_orders[i],self.list2_orders[i+1])
+        print()
+
+        print("___________Open positions__________")
+        print()
+        print(self.pos_list)
+        self.list1_orders.clear()
+        self.list2_orders.clear()
+        self.pos_list.clear()
 
     def connect_to_tws(self):
         self.tws_conn = Connection.create(port=self.port,
@@ -83,7 +116,6 @@ class account_ib:
             self.connect_to_tws()
             tws = self.tws_conn
             tws.registerAll(self.server_handler)  # регистрация всех событий, для получения next valid order id
-            OrderIB.__init__(OrderIB)
             time.sleep(1)
             self.register_callback_functions()
             time.sleep(1)
@@ -110,16 +142,16 @@ class account_ib:
 
                 # Алгоритм системы
 
-                if allow == True and self.position == 0:  # начальная точка
+                if allow == True and self.position == 0 and self.signal != allow:  # начальная точка
                     if self.OpenOrders != 0:
-                        print("Open order detected")
+                        print("Open order ticker: s%")
 
                         sleep(10)
                         continue
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty, 'BUY')
                     tws.placeOrder(self.order_ID, contract, ib_order)
 
-                elif allow == False and self.position == 0:
+                elif allow == False and self.position == 0 and self.signal != allow:
                     if self.OpenOrders != 0:
                         print("Open order detected")
 
@@ -128,7 +160,7 @@ class account_ib:
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty, 'SELL')
                     tws.placeOrder(self.order_ID, contract, ib_order)
 
-                elif allow == True and self.position < 0:  # разворот
+                elif allow == True and self.position < 0 and self.signal != allow:  # разворот
                     if self.OpenOrders != 0:
                         print("Open order detected")
 
@@ -137,7 +169,7 @@ class account_ib:
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty * 2, 'BUY')
                     tws.placeOrder(self.order_ID, contract, ib_order)
 
-                elif allow == False and self.position > 0:
+                elif allow == False and self.position > 0 and self.signal != allow:
                     if self.OpenOrders != 0:
                         print("Open order detected")
 
@@ -147,6 +179,7 @@ class account_ib:
                     tws.placeOrder(self.order_ID, contract, ib_order)
 
                 print("ma_short = ", ma_short, "ma_long = ", ma_long)
+
                 sleep(self.sec)
         finally:
             #выводим данные при выходе
