@@ -28,13 +28,13 @@ class account_ib:
         self.order_ID = None
         self.OpenOrders = 0
         self.statusOrder = None
-        self.list1_orders = []  #Открытые ордера: Тикер и цена
+        self.list1_orders = []  # Открытые ордера: Тикер и цена
         self.pos_list = []  # Активные позиции: тикер, размер позиции, рыночная стоимость, цена
-        self.list2_orders = list()  #Открытые ордера: Объем и статус
-        self.signal = None  #Предыдущее значение сигнала на вход
+        self.list2_orders = list()  # Открытые ордера: Объем и статус
+        self.signal = None  # Предыдущее значение сигнала на вход
 
     def server_handler(self, msg):
-        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
+        # print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -67,14 +67,14 @@ class account_ib:
         elif msg.typeName == "error" and msg.id != -1:
             return
 
-    def monitor_position(self): # Отслеживаем открытые позиции и ордера
+    def monitor_position(self):  # Отслеживаем открытые позиции и ордера
         print('Position:%s Bal:%s  Open orders:%s' % (self.position,
-                                                     self.balance, self.OpenOrders))
+                                                      self.balance, self.OpenOrders))
 
         print("__________Open orders___________")
         print()
-        for i in range(0,len(self.list1_orders),2):
-            print(self.list1_orders[i], self.list1_orders[i+1], self.list2_orders[i],self.list2_orders[i+1])
+        for i in range(0, len(self.list1_orders), 2):
+            print(self.list1_orders[i], self.list1_orders[i + 1], self.list2_orders[i], self.list2_orders[i + 1])
         print()
 
         print("___________Open positions__________")
@@ -112,6 +112,7 @@ class account_ib:
 
     def start(self, sec):
         try:
+
             self.sec = sec  # интервал запуска скрипта
             self.connect_to_tws()
             tws = self.tws_conn
@@ -182,7 +183,7 @@ class account_ib:
 
                 sleep(self.sec)
         finally:
-            #выводим данные при выходе
+            # выводим данные при выходе
 
             print('Position:%s Bal:%s  Open orders:%s' % (self.position,
                                                           self.balance, self.OpenOrders))
@@ -193,4 +194,3 @@ class account_ib:
 if __name__ == "__main__":
     system = account_ib("EUR")
     system.start(10)
-
