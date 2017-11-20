@@ -33,8 +33,20 @@ class account_ib:
         self.list2_orders = list()  # Открытые ордера: Объем и статус
         self.signal = None  # Предыдущее значение сигнала на вход
 
+    def position_handler(self,msg):
+
+        if  msg.typeName == "nextValidId":
+            print("order id = ", msg.orderId)
+            self.order_ID = msg.orderId
+
+        elif msg.typeName == "orderStatus":
+            print()
+            print("________order placed_______")
+            print("id: ", msg.orderId, "order status: ", msg.status)
+            sleep(1)
+
     def server_handler(self, msg):
-        # print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
+        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -106,7 +118,7 @@ class account_ib:
     def register_callback_functions(self):
         # Assign server messages handling function.
         self.tws_conn.registerAll(self.server_handler)
-
+        self.tws_conn.registerAll(self.position_handler)
         # Assign error handling function.
         self.tws_conn.register(self.error_handler, 'Error')
 
@@ -116,17 +128,21 @@ class account_ib:
             self.sec = sec  # интервал запуска скрипта
             self.connect_to_tws()
             tws = self.tws_conn
-            tws.registerAll(self.server_handler)  # регистрация всех событий, для получения next valid order id
+
+            # Запрашиваем и выводим информацию о позициях и ордерах перед запуском скрипта
+            
+            tws.registerAll(self.server_handler)
             time.sleep(1)
             self.register_callback_functions()
             time.sleep(1)
             dataLoader = histData.Downloader(debug=False)
+            self.request_account_updates(self.account_code)
+            time.sleep(1)
+            self.monitor_position()
+            time.sleep(1)
+
             while True:
-                self.request_account_updates(self.account_code)
-                #            self.request_orders()
-                time.sleep(1)
-                self.monitor_position()
-                time.sleep(1)
+
                 cur_time = datetime.datetime.now().strftime("%Y%m%d %H:%M:%S") + str(
                     " GMT")  # запрашиваем текущее время в нужном формате
                 contract = OrderIB.create_contract("EUR", "CASH", "IDEALPRO", "USD")
@@ -145,12 +161,19 @@ class account_ib:
 
                 if allow == True and self.position == 0 and self.signal != allow:  # начальная точка
                     if self.OpenOrders != 0:
-                        print("Open order ticker: s%")
+                        print("Open orders detected")
 
                         sleep(10)
                         continue
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty, 'BUY')
                     tws.placeOrder(self.order_ID, contract, ib_order)
+
+                    # Запрашивем статус размещенного ордера
+                    print()
+                    print("______new order_______")
+                    self.tws_conn.reqOpenOrders()
+                    self.tws_conn.registerAll(self.position_handler)
+
 
                 elif allow == False and self.position == 0 and self.signal != allow:
                     if self.OpenOrders != 0:
@@ -160,6 +183,9 @@ class account_ib:
                         continue
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty, 'SELL')
                     tws.placeOrder(self.order_ID, contract, ib_order)
+
+                    print()
+                    print("______new order_______")
 
                 elif allow == True and self.position < 0 and self.signal != allow:  # разворот
                     if self.OpenOrders != 0:
