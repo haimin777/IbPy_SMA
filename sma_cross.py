@@ -41,7 +41,7 @@ class account_ib:
 
         elif msg.typeName == "orderStatus":
             print()
-            print("________order placed_______")
+            print("___________order placed__________")
             print("id: ", msg.orderId, "order status: ", msg.status)
             sleep(1)
 
@@ -83,13 +83,13 @@ class account_ib:
         print('Position:%s Bal:%s  Open orders:%s' % (self.position,
                                                       self.balance, self.OpenOrders))
 
-        print("__________Open orders___________")
+        print("_____________Open orders_____________")
         print()
         for i in range(0, len(self.list1_orders), 2):
             print(self.list1_orders[i], self.list1_orders[i + 1], self.list2_orders[i], self.list2_orders[i + 1])
         print()
 
-        print("___________Open positions__________")
+        print("____________Open positions___________")
         print()
         print(self.pos_list)
         self.list1_orders.clear()
@@ -118,7 +118,7 @@ class account_ib:
     def register_callback_functions(self):
         # Assign server messages handling function.
         self.tws_conn.registerAll(self.server_handler)
-        self.tws_conn.registerAll(self.position_handler)
+       # self.tws_conn.registerAll(self.position_handler)
         # Assign error handling function.
         self.tws_conn.register(self.error_handler, 'Error')
 
@@ -130,7 +130,7 @@ class account_ib:
             tws = self.tws_conn
 
             # Запрашиваем и выводим информацию о позициях и ордерах перед запуском скрипта
-            
+
             tws.registerAll(self.server_handler)
             time.sleep(1)
             self.register_callback_functions()
@@ -142,6 +142,7 @@ class account_ib:
             time.sleep(1)
 
             while True:
+
 
                 cur_time = datetime.datetime.now().strftime("%Y%m%d %H:%M:%S") + str(
                     " GMT")  # запрашиваем текущее время в нужном формате
@@ -184,9 +185,12 @@ class account_ib:
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty, 'SELL')
                     tws.placeOrder(self.order_ID, contract, ib_order)
 
+#               Проверяем статус созданного ордера
+
                     print()
                     print("______new order_______")
-
+                    self.tws_conn.reqOpenOrders()
+                    self.tws_conn.registerAll(self.position_handler)
                 elif allow == True and self.position < 0 and self.signal != allow:  # разворот
                     if self.OpenOrders != 0:
                         print("Open order detected")
@@ -196,6 +200,13 @@ class account_ib:
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty * 2, 'BUY')
                     tws.placeOrder(self.order_ID, contract, ib_order)
 
+                    #               Проверяем статус созданного ордера
+
+                    print()
+                    print("______new order_______")
+                    self.tws_conn.reqOpenOrders()
+                    self.tws_conn.registerAll(self.position_handler)
+
                 elif allow == False and self.position > 0 and self.signal != allow:
                     if self.OpenOrders != 0:
                         print("Open order detected")
@@ -204,13 +215,19 @@ class account_ib:
                         continue
                     ib_order = OrderIB.create_order('MKT', OrderIB.quantyty * 2, 'SELL')
                     tws.placeOrder(self.order_ID, contract, ib_order)
+                    #               Проверяем статус созданного ордера
 
+                    print()
+                    print("______new order_______")
+                    self.tws_conn.reqOpenOrders()
+                    self.tws_conn.registerAll(self.position_handler)
                 print("ma_short = ", ma_short, "ma_long = ", ma_long)
 
                 sleep(self.sec)
+
         finally:
             # выводим данные при выходе
-
+            print()
             print('Position:%s Bal:%s  Open orders:%s' % (self.position,
                                                           self.balance, self.OpenOrders))
             print("disconnected")
