@@ -45,6 +45,9 @@ class account_ib:
             print("id: ", msg.orderId, "order status: ", msg.status)
             sleep(1)
 
+        elif msg.typeName == "orderStatus" and msg.orderId == self.order_ID-1:
+            print("___----___")
+
     def server_handler(self, msg):
         #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
@@ -96,6 +99,30 @@ class account_ib:
         self.list2_orders.clear()
         self.pos_list.clear()
 
+
+    def monitor_open_position(self):  # Отслеживаем  ордера открытые в цикле
+
+        print("_____________new open orders_____________")
+        print()
+        for i in range(0, len(self.list1_orders), 2):
+            print(self.list1_orders[i], self.list1_orders[i + 1], self.list2_orders[i], self.list2_orders[i + 1])
+        print()
+
+        print("____________new open positions___________")
+        print()
+        print(self.pos_list)
+        self.list1_orders.clear()
+        self.list2_orders.clear()
+        self.pos_list.clear()
+
+
+    def operation_status(self): # выводим статус заявки, созданной алгоритмом
+        print()
+        print("______new order signal_______")
+        self.tws_conn.reqOpenOrders()
+        self.tws_conn.registerAll(self.position_handler)
+
+
     def connect_to_tws(self):
         self.tws_conn = Connection.create(port=self.port,
                                           clientId=self.client_id)
@@ -143,7 +170,12 @@ class account_ib:
 
             while True:
 
-
+                tws.registerAll(self.position_handler)
+                time.sleep(1)
+                self.register_callback_functions()
+                sleep(1)
+                self.monitor_open_position()
+                sleep(1)
                 cur_time = datetime.datetime.now().strftime("%Y%m%d %H:%M:%S") + str(
                     " GMT")  # запрашиваем текущее время в нужном формате
                 contract = OrderIB.create_contract("EUR", "CASH", "IDEALPRO", "USD")
@@ -170,10 +202,7 @@ class account_ib:
                     tws.placeOrder(self.order_ID, contract, ib_order)
 
                     # Запрашивем статус размещенного ордера
-                    print()
-                    print("______new order_______")
-                    self.tws_conn.reqOpenOrders()
-                    self.tws_conn.registerAll(self.position_handler)
+                    self.operation_status()
 
 
                 elif allow == False and self.position == 0 and self.signal != allow:
@@ -187,10 +216,9 @@ class account_ib:
 
 #               Проверяем статус созданного ордера
 
-                    print()
-                    print("______new order_______")
-                    self.tws_conn.reqOpenOrders()
-                    self.tws_conn.registerAll(self.position_handler)
+                    self.operation_status()
+
+
                 elif allow == True and self.position < 0 and self.signal != allow:  # разворот
                     if self.OpenOrders != 0:
                         print("Open order detected")
@@ -202,10 +230,7 @@ class account_ib:
 
                     #               Проверяем статус созданного ордера
 
-                    print()
-                    print("______new order_______")
-                    self.tws_conn.reqOpenOrders()
-                    self.tws_conn.registerAll(self.position_handler)
+                    self.operation_status()
 
                 elif allow == False and self.position > 0 and self.signal != allow:
                     if self.OpenOrders != 0:
@@ -217,15 +242,14 @@ class account_ib:
                     tws.placeOrder(self.order_ID, contract, ib_order)
                     #               Проверяем статус созданного ордера
 
-                    print()
-                    print("______new order_______")
-                    self.tws_conn.reqOpenOrders()
-                    self.tws_conn.registerAll(self.position_handler)
-                print("ma_short = ", ma_short, "ma_long = ", ma_long)
+                    self.operation_status()
+                #print("ma_short = ", ma_short, "ma_long = ", ma_long)
+                print()
 
                 sleep(self.sec)
 
         finally:
+
             # выводим данные при выходе
             print()
             print('Position:%s Bal:%s  Open orders:%s' % (self.position,
