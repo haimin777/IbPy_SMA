@@ -187,7 +187,7 @@ class account_ib:
     def start(self, sec):
         try:
 
-            self.sec = sec  # интервал запуска скрипта
+            #self.sec = sec  # интервал запуска скрипта
             self.connect_to_tws()
             tws = self.tws_conn
 
@@ -221,9 +221,8 @@ class account_ib:
                 self.trade_logic(data_loader, pos_volume)
                 if self.current_order_status != "Filled" and self.current_order_status != None:  # проверяем статус созданного ордера
                     tws.placeOrder(self.order_ID, self.contract, self.ib_order)
-                else:
-                    continue
-                sleep(self.sec)
+
+                sleep(sec)
 
         finally:
 
@@ -237,4 +236,4 @@ class account_ib:
 
 if __name__ == "__main__":
     system = account_ib("EUR")
-    system.start(10)
+    system.start(300)
