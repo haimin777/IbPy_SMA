@@ -32,10 +32,11 @@ class account_ib:
         self.pos_list = []  # Активные позиции: тикер, размер позиции, рыночная стоимость, цена
         self.list2_orders = list()  # Открытые ордера: Объем и статус
         self.signal = None  # Предыдущее значение сигнала на вход
+        self.current_order_status = None
 
-    def position_handler(self,msg):
+    def position_handler(self, msg):
 
-        if  msg.typeName == "nextValidId":
+        if msg.typeName == "nextValidId":
             print("order id = ", msg.orderId)
             self.order_ID = msg.orderId
 
@@ -43,13 +44,14 @@ class account_ib:
             print()
             print("___________order placed__________")
             print("id: ", msg.orderId, "order status: ", msg.status)
+            self.current_order_status = msg.status
             sleep(1)
 
-        elif msg.typeName == "orderStatus" and msg.orderId == self.order_ID-1:
+        elif msg.typeName == "orderStatus" and msg.orderId == self.order_ID - 1:
             print("___----___")
 
     def server_handler(self, msg):
-        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
+        # print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -99,7 +101,6 @@ class account_ib:
         self.list2_orders.clear()
         self.pos_list.clear()
 
-
     def monitor_open_position(self):  # Отслеживаем  ордера открытые в цикле
 
         print("_____________new open orders_____________")
@@ -115,13 +116,11 @@ class account_ib:
         self.list2_orders.clear()
         self.pos_list.clear()
 
-
-    def operation_status(self): # выводим статус заявки, созданной алгоритмом
+    def operation_status(self):  # выводим статус заявки, созданной алгоритмом
         print()
         print("______new order signal_______")
         self.tws_conn.reqOpenOrders()
         self.tws_conn.registerAll(self.position_handler)
-
 
     def connect_to_tws(self):
         self.tws_conn = Connection.create(port=self.port,
@@ -145,9 +144,45 @@ class account_ib:
     def register_callback_functions(self):
         # Assign server messages handling function.
         self.tws_conn.registerAll(self.server_handler)
-       # self.tws_conn.registerAll(self.position_handler)
+        # self.tws_conn.registerAll(self.position_handler)
         # Assign error handling function.
         self.tws_conn.register(self.error_handler, 'Error')
+
+    def cross_signal(self, data_loader):  # функция для определения пересечения
+        self.cur_time = datetime.datetime.now().strftime("%Y%m%d %H:%M:%S") + str(
+            " GMT")  # запрашиваем текущее время в нужном формате
+        self.contract = OrderIB.create_contract("EUR", "CASH", "IDEALPRO", "USD")
+        data = data_loader.requestData(self.contract, self.cur_time, '1 D',
+                                       '5 mins', )  # запрашиваем данные для 5 минутных свеч
+        ma_long = talib.SMA(data.close.values, timeperiod=80)[-1]  # вычисляем SMA
+        ma_short = talib.SMA(data.close.values, timeperiod=10)[-1]
+
+        allow = ma_short > ma_long
+        return allow
+
+    def trade_logic(self, data_loader, pos_volume):
+
+        allow = self.cross_signal(data_loader)  # Проверяем сигнал на вход
+
+        if allow == True and self.signal != allow:  # проверка пересечения
+
+            print("\n", "signal to open long position", "\n", allow)
+            self.signal = allow
+            if self.position == 0:
+                self.ib_order = OrderIB.create_order('MKT', pos_volume, 'BUY')
+            else:
+                self.ib_order = OrderIB.create_order("MKT", abs(self.position) + pos_volume, "BUY")
+            return self.ib_order
+        elif allow == False and self.signal != allow:  # начальная точка
+            print("\n", "signal to open short position", "\n")
+            self.signal = allow
+            if self.position == 0:
+                self.ib_order = OrderIB.create_order('MKT', pos_volume, 'SELL')
+            else:
+                # что бы перевернуть позицию используем модуль числа
+                self.ib_order = OrderIB.create_order("MKT", abs(self.position) + pos_volume, "SELL")
+            return self.ib_order
+            # print("current info:", ma_long, ma_short, allow, "\n", self.position, self.OpenOrders)
 
     def start(self, sec):
         try:
@@ -162,11 +197,12 @@ class account_ib:
             time.sleep(1)
             self.register_callback_functions()
             time.sleep(1)
-            dataLoader = histData.Downloader(debug=False)
+            data_loader = histData.Downloader(debug=False)
             self.request_account_updates(self.account_code)
             time.sleep(1)
             self.monitor_position()
             time.sleep(1)
+            self.signal = self.cross_signal(data_loader)  # Проверяем исходное значение сигнала
 
             while True:
 
@@ -174,86 +210,27 @@ class account_ib:
                 time.sleep(1)
                 self.register_callback_functions()
                 sleep(1)
-                self.monitor_open_position()
+                # self.monitor_open_position()
                 sleep(1)
-                cur_time = datetime.datetime.now().strftime("%Y%m%d %H:%M:%S") + str(
-                    " GMT")  # запрашиваем текущее время в нужном формате
-                contract = OrderIB.create_contract("EUR", "CASH", "IDEALPRO", "USD")
-                data = dataLoader.requestData(contract, cur_time, '1 D',
-                                              '5 mins', )  # запрашиваем данные для 5 минутных свеч
-                ma_long = talib.SMA(data.close.values, timeperiod=80)[-1]  # вычисляем SMA
-                ma_short = talib.SMA(data.close.values, timeperiod=10)[-1]
-
-                allow = ma_short < ma_long  # Проверяем сигнал на вход
 
                 # Расчитаем количество лотов, как баланс в тысячах (заходим на весь баланс без рычага)
-
-                OrderIB.quantyty = int(float(self.balance) // 1000 * 1000)
-
+                pos_volume = 9000
+                # pos_volume = int(float(self.balance) // 1000 * 1000)
+                print("\n", "last placed order status:", "\n", self.current_order_status)
                 # Алгоритм системы
-
-                if allow == True and self.position == 0 and self.signal != allow:  # начальная точка
-                    if self.OpenOrders != 0:
-                        print("Open orders detected")
-
-                        sleep(10)
-                        continue
-                    ib_order = OrderIB.create_order('MKT', OrderIB.quantyty, 'BUY')
-                    tws.placeOrder(self.order_ID, contract, ib_order)
-
-                    # Запрашивем статус размещенного ордера
-                    self.operation_status()
-
-
-                elif allow == False and self.position == 0 and self.signal != allow:
-                    if self.OpenOrders != 0:
-                        print("Open order detected")
-
-                        sleep(10)
-                        continue
-                    ib_order = OrderIB.create_order('MKT', OrderIB.quantyty, 'SELL')
-                    tws.placeOrder(self.order_ID, contract, ib_order)
-
-#               Проверяем статус созданного ордера
-
-                    self.operation_status()
-
-
-                elif allow == True and self.position < 0 and self.signal != allow:  # разворот
-                    if self.OpenOrders != 0:
-                        print("Open order detected")
-
-                        sleep(10)
-                        continue
-                    ib_order = OrderIB.create_order('MKT', OrderIB.quantyty * 2, 'BUY')
-                    tws.placeOrder(self.order_ID, contract, ib_order)
-
-                    #               Проверяем статус созданного ордера
-
-                    self.operation_status()
-
-                elif allow == False and self.position > 0 and self.signal != allow:
-                    if self.OpenOrders != 0:
-                        print("Open order detected")
-
-                        sleep(10)
-                        continue
-                    ib_order = OrderIB.create_order('MKT', OrderIB.quantyty * 2, 'SELL')
-                    tws.placeOrder(self.order_ID, contract, ib_order)
-                    #               Проверяем статус созданного ордера
-
-                    self.operation_status()
-                #print("ma_short = ", ma_short, "ma_long = ", ma_long)
-                print()
-
+                self.trade_logic(data_loader, pos_volume)
+                if self.current_order_status != "Filled" and self.current_order_status != None:  # проверяем статус созданного ордера
+                    tws.placeOrder(self.order_ID, self.contract, self.ib_order)
+                else:
+                    continue
                 sleep(self.sec)
 
         finally:
 
             # выводим данные при выходе
-            print()
-            print('Position:%s Bal:%s  Open orders:%s' % (self.position,
-                                                          self.balance, self.OpenOrders))
+
+            print("\n", 'Position:%s Bal:%s  Open orders:%s' % (self.position,
+                                                                self.balance, self.OpenOrders))
             print("disconnected")
             self.disconnect_from_tws()
 
