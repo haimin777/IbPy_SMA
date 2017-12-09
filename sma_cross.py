@@ -41,8 +41,7 @@ class account_ib:
             self.order_ID = msg.orderId
 
         elif msg.typeName == "orderStatus":
-            print()
-            print("___________order placed__________")
+            print("___________order placed__________", "\n")
             print("id: ", msg.orderId, "order status: ", msg.status)
             self.current_order_status = msg.status
             sleep(1)
@@ -88,14 +87,11 @@ class account_ib:
         print('Position:%s Bal:%s  Open orders:%s' % (self.position,
                                                       self.balance, self.OpenOrders))
 
-        print("_____________Open orders_____________")
-        print()
+        print("\n", "_____________Open orders_____________", "\n")
         for i in range(0, len(self.list1_orders), 2):
             print(self.list1_orders[i], self.list1_orders[i + 1], self.list2_orders[i], self.list2_orders[i + 1])
-        print()
 
-        print("____________Open positions___________")
-        print()
+        print("\n", "____________Open positions___________", "\n")
         print(self.pos_list)
         self.list1_orders.clear()
         self.list2_orders.clear()
@@ -103,22 +99,18 @@ class account_ib:
 
     def monitor_open_position(self):  # Отслеживаем  ордера открытые в цикле
 
-        print("_____________new open orders_____________")
-        print()
+        print("_____________new open orders_____________", "\n")
         for i in range(0, len(self.list1_orders), 2):
             print(self.list1_orders[i], self.list1_orders[i + 1], self.list2_orders[i], self.list2_orders[i + 1])
-        print()
 
-        print("____________new open positions___________")
-        print()
+        print("\n", "____________new open positions___________","\n")
         print(self.pos_list)
         self.list1_orders.clear()
         self.list2_orders.clear()
         self.pos_list.clear()
 
     def operation_status(self):  # выводим статус заявки, созданной алгоритмом
-        print()
-        print("______new order signal_______")
+        print("\n","______new order signal_______","\n")
         self.tws_conn.reqOpenOrders()
         self.tws_conn.registerAll(self.position_handler)
 
@@ -194,14 +186,12 @@ class account_ib:
             # Запрашиваем и выводим информацию о позициях и ордерах перед запуском скрипта
 
             tws.registerAll(self.server_handler)
-            time.sleep(1)
+
             self.register_callback_functions()
-            time.sleep(1)
+
             data_loader = histData.Downloader(debug=False)
             self.request_account_updates(self.account_code)
-            time.sleep(1)
             self.monitor_position()
-            time.sleep(1)
             self.signal = self.cross_signal(data_loader)  # Проверяем исходное значение сигнала
 
             while True:
