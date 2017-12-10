@@ -146,7 +146,9 @@ class account_ib:
     def trade_logic(self, data_loader, pos_volume):
 
         allow = self.cross_signal()  # Проверяем сигнал на вход
-        #allow = 1
+
+        #создаем контракт для одного из тикеров
+
         self.contract = OrderIB.create_contract(self.currency[random.randint(0, 2)],
                                                 "CASH", "IDEALPRO", "USD")
 
@@ -175,10 +177,12 @@ class account_ib:
                 print(self.trade_pos_list[n+1])
                 self.ib_order = OrderIB.create_order('MKT',
                          abs(self.trade_pos_list[n+1]), 'SELL')
+                return self.ib_order
+            except ValueError: # если сигнал на продажу и открытой позиции нет
+                                # то идем дальше
+                print("no long positions")
 
-            except ValueError:
-                 self.ib_order = OrderIB.create_order('MKT', pos_volume, 'SELL')
-                 return self.ib_order
+
 
     def start(self, sec):
         try:
