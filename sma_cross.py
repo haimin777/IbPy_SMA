@@ -14,12 +14,13 @@ from ib.opt import Connection, message, ibConnection
 
 import datetime
 from time import sleep
+from rand_trade import account_ib_r
 
 
 class account_ib:
-    def __init__(self, symbol, port=7496):
+    def __init__(self, port=7496):
         self.client_id = 100
-        self.symbol = symbol
+        #self.symbol = symbol
         self.port = port
         self.tws_conn = None
         self.account_code = None
@@ -32,6 +33,7 @@ class account_ib:
         self.pos_list = []  # Активные позиции: тикер, размер позиции, рыночная стоимость, цена
         self.list2_orders = list()  # Открытые ордера: Объем и статус
         self.current_order_status = None
+        self.trade_pos_list = []
 
     def position_handler(self, msg):
 
@@ -79,6 +81,11 @@ class account_ib:
             self.list1_orders.append(msg.contract.m_symbol)
             self.list1_orders.append(msg.order.m_lmtPrice)
 
+        elif msg.typeName == "position":  #запрос позиций в торговом цикле
+           # print("POS here", "\n", msg.contract.m_symbol)
+
+            self.trade_pos_list.append(msg.contract.m_symbol)
+            self.trade_pos_list.append(msg.pos)
 
         elif msg.typeName == "error" and msg.id != -1:
             return
@@ -170,6 +177,7 @@ class account_ib:
 
     def start(self, sec):
         try:
+
             self.sec = sec  # интервал запуска скрипта
             self.connect_to_tws()
             tws = self.tws_conn
@@ -188,13 +196,23 @@ class account_ib:
                 tws.registerAll(self.position_handler)
                 self.register_callback_functions()
                 # Расчитаем количество лотов, как баланс в тысячах (заходим на весь баланс без рычага)
-                pos_volume = int(float(self.balance) // 1000 * 1000)
+                pos_volume = int(float(self.balance) // 1000 * 100)
                 print("\n", "last placed order status:", "\n", self.current_order_status)
                 # Алгоритм системы
-                self.trade_logic(data_loader, pos_volume)
-                tws.placeOrder(self.order_ID, self.contract, self.ib_order)
+                tws.reqPositions()
+                account_ib_r.trade_logic_rand(account_ib_r,
+                                              self.current_order_status,
+                                              self.trade_pos_list,
+                                              pos_volume)
+                try:
+                    tws.placeOrder(self.order_ID, account_ib_r.contract,
+                                   account_ib_r.ib_order)
+                    self.order_ID += 1
+                except AttributeError:
+                    print("already placed")
+                finally:
 
-                sleep(self.sec)
+                    sleep(self.sec)
 
         finally:
 
@@ -207,5 +225,5 @@ class account_ib:
 
 
 if __name__ == "__main__":
-    system = account_ib("EUR")
-    system.start(10)
+    system = account_ib()
+    system.start(20)

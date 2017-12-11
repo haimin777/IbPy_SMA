@@ -17,10 +17,10 @@ from time import sleep
 import random
 
 
-class account_ib:
+class account_ib_r:
     def __init__(self, port=7496):
         self.client_id = 100
-        #self.symbol = symbol
+        # self.symbol = symbol
         self.port = port
         self.tws_conn = None
         self.account_code = None
@@ -49,11 +49,11 @@ class account_ib:
             self.current_order_status = msg.status
             sleep(1)
 
-            #elif msg.typeName == "orderStatus" and msg.orderId == self.order_ID-1:
-            #print("___----___")
+            # elif msg.typeName == "orderStatus" and msg.orderId == self.order_ID-1:
+            # print("___----___")
 
     def server_handler(self, msg):
-        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
+        # print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -82,8 +82,8 @@ class account_ib:
             self.list1_orders.append(msg.contract.m_symbol)
             self.list1_orders.append(msg.order.m_lmtPrice)
 
-        elif msg.typeName == "position":  #запрос позиций в торговом цикле
-           # print("POS here", "\n", msg.contract.m_symbol)
+        elif msg.typeName == "position":  # запрос позиций в торговом цикле
+            # print("POS here", "\n", msg.contract.m_symbol)
 
             self.trade_pos_list.append(msg.contract.m_symbol)
             self.trade_pos_list.append(msg.pos)
@@ -140,91 +140,95 @@ class account_ib:
 
     def cross_signal(self):  # функция для определения сигнала
 
-        allow = random.randint(0,1)
+        allow = random.randint(0, 1)
         return allow
 
-    def trade_logic(self, data_loader, pos_volume):
+    def trade_logic_rand(self, current_order_status, trade_pos_list, pos_volume):
+        self.__init__(self)
+        if current_order_status == "Filled" or current_order_status == None:
+            # если предыдущий ордер выполнен, можно торговать
 
-        allow = self.cross_signal()  # Проверяем сигнал на вход
+            allow = random.randint(0, 1)  # Проверяем сигнал на вход
 
-        #создаем контракт для одного из тикеров
+            # создаем контракт для одного из тикеров
 
-        self.contract = OrderIB.create_contract(self.currency[random.randint(0, 2)],
-                                                "CASH", "IDEALPRO", "USD")
+            self.contract = OrderIB.create_contract(self.currency[random.randint(0, 2)],
+                                                    "CASH", "IDEALPRO", "USD")
 
-        # Проверяем позицию по созданному контракту
-        self.tws_conn.reqPositions()
-        sleep(1)
-        #print(self.trade_pos_list)
-        print("placed order for:  ", self.contract.m_symbol)
+            # Проверяем позицию по созданному контракту
 
-        #print(self.trade_pos_list.index(self.contract.m_symbol))
+            print("placed order for:  ", self.contract.m_symbol,
+                  "\n", "allow: ", allow)
 
-        if allow == 1: # если есть сигнал на покупку
-                    # и позиция по тикеру открыта, то идем дальше
+        # print(self.trade_pos_list.index(self.contract.m_symbol))
+
+        if allow == 1:  # если есть сигнал на покупку
+            # и позиция по тикеру открыта, то идем дальше
             try:
-                self.trade_pos_list.index(self.contract.m_symbol)
+                trade_pos_list.index(self.contract.m_symbol)
                 print("\n", "opened long position", "\n")
-            except ValueError: # если позиции нет то открываем
-                 self.ib_order = OrderIB.create_order('MKT', pos_volume, 'BUY')
-                 return self.ib_order
+            except ValueError:  # если позиции нет то открываем
+                self.ib_order = OrderIB.create_order('MKT', pos_volume, 'BUY')
+                return self.ib_order
 
-        elif allow == 0: #если сигнал на продажу и есть позиция по
-                         # по этому тикеру, продаем имеющееся количество
+        elif allow == 0:  # если сигнал на продажу и есть позиция по
+            # по этому тикеру, то переворачиваем имеющуюся позицию
             try:
                 n = self.trade_pos_list.index(self.contract.m_symbol)
-                print("\n", "signal to close long position", "\n", allow)
-                print(self.trade_pos_list[n+1])
+                print("\n", "signal open shortposition", "\n", allow)
+                print(self.trade_pos_list[n + 1])
                 self.ib_order = OrderIB.create_order('MKT',
-                         abs(self.trade_pos_list[n+1]), 'SELL')
+                                                     2*abs(self.trade_pos_list[n + 1]),
+                                                     'SELL')
                 return self.ib_order
-            except ValueError: # если сигнал на продажу и открытой позиции нет
-                                # то идем дальше
-                print("no long positions")
+            except ValueError:  # если сигнал на продажу и открытой позиции нет
+                # то открываем на 10% капитала
+                self.ib_order = OrderIB.create_order('MKT',
+                                                     pos_volume,
+                                                     'SELL')
 
 
+def start(self, sec):
+    try:
+        self.sec = sec  # интервал запуска скрипта
+        self.connect_to_tws()
+        tws = self.tws_conn
 
-    def start(self, sec):
-        try:
-            self.sec = sec  # интервал запуска скрипта
-            self.connect_to_tws()
-            tws = self.tws_conn
+        # Запрашиваем и выводим информацию о позициях и ордерах перед запуском скрипта
 
-            # Запрашиваем и выводим информацию о позициях и ордерах перед запуском скрипта
+        tws.registerAll(self.server_handler)
+        self.register_callback_functions()
+        data_loader = histData.Downloader(debug=False)
+        self.request_account_updates(self.account_code)
+        sleep(1)
+        self.monitor_position()
+        sleep(1)
 
-            tws.registerAll(self.server_handler)
+        while True:
+            tws.registerAll(self.position_handler)
             self.register_callback_functions()
-            data_loader = histData.Downloader(debug=False)
-            self.request_account_updates(self.account_code)
-            sleep(1)
-            self.monitor_position()
-            sleep(1)
+            # Расчитаем количество лотов, как баланс в тысячах (заходим на весь баланс без рычага)
+            pos_volume = int(float(self.balance) // 1000 * 100)
+            print("\n", "last placed order status:", "\n", self.current_order_status)
+            # Алгоритм системы
+            self.trade_logic_rand(data_loader, pos_volume)
+            try:
+                tws.placeOrder(self.order_ID, self.contract, self.ib_order)
+                self.order_ID += 1
+            except AttributeError:
+                print("already placed")
+            finally:
 
-            while True:
-                tws.registerAll(self.position_handler)
-                self.register_callback_functions()
-                # Расчитаем количество лотов, как баланс в тысячах (заходим на весь баланс без рычага)
-                pos_volume = int(float(self.balance) // 1000 * 100)
-                print("\n", "last placed order status:", "\n", self.current_order_status)
-                # Алгоритм системы
-                self.trade_logic(data_loader, pos_volume)
-                try:
-                    tws.placeOrder(self.order_ID, self.contract, self.ib_order)
-                    self.order_ID += 1
-                except AttributeError:
-                    print("already placed")
-                finally:
+                sleep(self.sec)
 
-                    sleep(self.sec)
+    finally:
 
-        finally:
+        # выводим данные при выходе
 
-            # выводим данные при выходе
-
-            print("\n", 'Position:%s Bal:%s  Open orders:%s' % (self.position,
-                                                                self.balance, self.OpenOrders))
-            print("disconnected")
-            self.disconnect_from_tws()
+        print("\n", 'Position:%s Bal:%s  Open orders:%s' % (self.position,
+                                                            self.balance, self.OpenOrders))
+        print("disconnected")
+        self.disconnect_from_tws()
 
 
 if __name__ == "__main__":
