@@ -14,30 +14,12 @@ class connect_ib:
         self.port = 7496
         self.tws_conn = None
 
-    def error_handler(self, msg):
-        print ("Server Error:", msg)
-
-
-    def server_handler(self, msg):
-        print ("Server Msg:", msg.typeName, "-", msg)
-
-
-#if __name__ == "__main__":
-#    client_id = 100
-#    order_id = 1
-#    port = 7496
-#    tws_conn = None
-    
     def connect(self):
         try:
             self.tws_conn = Connection.create(port=self.port,
                                      clientId=self.client_id)
             self.tws_conn.connect()
-    # Assign error handling function.
-            self.tws_conn.register(self.error_handler, 'Error')
-    # Assign server messages handling function.
-            self.tws_conn.registerAll(self.server_handler)
-         #   print("Connection Ok")
+
         finally:
             print("Connection Ok")
 
