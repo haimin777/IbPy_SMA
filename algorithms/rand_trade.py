@@ -17,7 +17,6 @@ from time import sleep
 import random
 
 
-
 def logic_random(positions, pos_volume):
 
     if random.randint(0, 1):

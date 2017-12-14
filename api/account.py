@@ -11,7 +11,7 @@ import time
 from connect import connect_ib
 
 
-class account_info:
+class AccountInfo:
 
     def __init__(self):
 
@@ -116,7 +116,7 @@ class account_info:
         # Assign error handling function.
         self.tws_conn.register(self.error_handler, 'Error')
     def start_info(self, conect_ib):
-        account_info.__init__(account_info)
+        AccountInfo.__init__(AccountInfo)
         connect_ib.connect(connect_ib)
         self.tws_conn = connect_ib.tws_conn
         self.tws_conn.registerAll(self.server_handler)
@@ -136,7 +136,7 @@ class account_info:
 
     def start(self, connect_ib):
         try:
-            account_info.__init__(account_info)
+            AccountInfo.__init__(AccountInfo)
             #connect_ib.__init__(connect_ib)
 
             connect_ib.connect(connect_ib)
@@ -156,7 +156,7 @@ class account_info:
 
         
 if __name__ == "__main__":
-    system = account_info()
+    system = AccountInfo()
     system.start(connect_ib)
     print(system.trade_pos_list)
 

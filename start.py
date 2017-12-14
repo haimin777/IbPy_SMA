@@ -1,12 +1,12 @@
 from connect import connect_ib
-from account import account_info
+from account import AccountInfo
 from rand_trade import logic_random
 from order import OrderIB
 from time import sleep
 
 def start(sec):
     #подключаемся и выводим начальные данные
-    acc_inf = account_info()
+    acc_inf = AccountInfo()
     acc_inf.start_info(connect_ib)
     tws = connect_ib.tws_conn
     while True:

@@ -15,9 +15,9 @@ from ib.opt import Connection, message, ibConnection
 import datetime
 from time import sleep
 from connect import connect_ib
-from account import account_info
+from account import AccountInfo
 
-class account_ib:
+class AccountIB:
     def __init__(self, port=7496):
         self.client_id = 100
         self.port = port
@@ -70,17 +70,17 @@ class account_ib:
                 self.ib_order = OrderIB.create_order("MKT", abs(self.position) + pos_volume, "SELL")
             return self.ib_order
 
-    def start(self, sec, connect_ib, account_info):
+    def start(self, sec, connect_ib, AccountInfo):
         try:
             # Запрашиваем и выводим информацию о позициях и ордерах перед запуском скрипта
-            acc_inf = account_info()
+            acc_inf = AccountInfo()
             acc_inf.start_info(connect_ib)
             sleep(1)
             tws = connect_ib.tws_conn
             data_loader = histData.Downloader(debug=False)
 
             while True:
-               # tws.registerAll(account_info.position_handler)
+               # tws.registerAll(AccountInfo.position_handler)
                # self.register_callback_functions()
                 # Расчитаем количество лотов, как баланс в тысячах (заходим на весь баланс без рычага)
                 #pos_volume = 1000
@@ -113,9 +113,9 @@ class account_ib:
 
 
 if __name__ == "__main__":
-  #  system = account_info()
+  #  system = AccountInfo()
   #  system.start_info(connect_ib)
   #  connect_ib.disconnect(connect_ib)
 
-   system = account_ib()
-   system.start(20, connect_ib, account_info)
+   system = AccountIB()
+   system.start(20, connect_ib, AccountInfo)
