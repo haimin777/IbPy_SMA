@@ -25,7 +25,7 @@ class account_info:
         self.list1_orders = []  # Открытые ордера: Тикер и цена
         self.pos_list = []  # Активные позиции: тикер, размер позиции, рыночная стоимость, цена
         self.list2_orders = list()  # Открытые ордера: Объем и статус
-        self.trade_pos_list = []
+        self.trade_pos_list = {}
 
     def position_handler(self, msg):
 
@@ -42,7 +42,7 @@ class account_info:
 
 
     def server_handler(self, msg):
-       # print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
+        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -71,10 +71,8 @@ class account_info:
             self.list1_orders.append(msg.order.m_lmtPrice)
 
         elif msg.typeName == "position":  # запрос позиций в торговом цикле
-            # print("POS here", "\n", msg.contract.m_symbol)
-
-            self.trade_pos_list.append(msg.contract.m_symbol)
-            self.trade_pos_list.append(msg.pos)
+           # print("POS here", "\n", msg.contract.m_symbol)
+            self.trade_pos_list.update({msg.contract.m_symbol :  msg.pos})
 
 
         elif msg.typeName == "error" and msg.id != -1:
@@ -129,6 +127,13 @@ class account_info:
         time.sleep(1)
         self.monitor_position()
 
+    def trade_positions(self):   #вывод позиций в процессе работы
+        self.tws_conn.reqPositions()
+        time.sleep(1)
+        self.register_callback_functions()
+        print(self.trade_pos_list)
+        return self.trade_pos_list
+
     def start(self, connect_ib):
         try:
             account_info.__init__(account_info)
@@ -137,14 +142,14 @@ class account_info:
             connect_ib.connect(connect_ib)
             self.tws_conn = connect_ib.tws_conn
             self.tws_conn.registerAll(self.server_handler)
-            time. sleep(1)
-            self.register_callback_functions()
+
             time.sleep(1)
             self.request_account_updates(self.account_code)
             time.sleep(1)
             self.monitor_position()
             #print(self.order_ID, "tttttt")
-            
+            self.trade_positions()
+
         finally:
             connect_ib.disconnect(connect_ib)
             print ("disconnected")
@@ -153,4 +158,6 @@ class account_info:
 if __name__ == "__main__":
     system = account_info()
     system.start(connect_ib)
+    print(system.trade_pos_list)
+
     
