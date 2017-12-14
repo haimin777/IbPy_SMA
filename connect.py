@@ -16,6 +16,7 @@ class connect_ib:
 
     def connect(self):
         try:
+            self.__init__(self)
             self.tws_conn = Connection.create(port=self.port,
                                      clientId=self.client_id)
             self.tws_conn.connect()

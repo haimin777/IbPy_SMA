@@ -18,13 +18,14 @@ class account_info:
         self.tws_conn = None
         self.account_code = None
         self.position = 0
-        self.balance = None
+        self.balance = 1
         self.order_ID = None
         self.OpenOrders = 0
         self.statusOrder = None
         self.list1_orders = []  # Открытые ордера: Тикер и цена
         self.pos_list = []  # Активные позиции: тикер, размер позиции, рыночная стоимость, цена
         self.list2_orders = list()  # Открытые ордера: Объем и статус
+        self.trade_pos_list = []
 
     def position_handler(self, msg):
 
@@ -41,7 +42,7 @@ class account_info:
 
 
     def server_handler(self, msg):
-        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
+       # print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -57,7 +58,6 @@ class account_info:
         elif msg.typeName == "orderStatus":
             self.OpenOrders = msg.remaining
             self.statusOrder = msg.status
-
             self.list2_orders.append(self.OpenOrders)
             self.list2_orders.append(msg.status)
 
@@ -114,22 +114,36 @@ class account_info:
         # Assign server messages handling function.
         self.tws_conn.registerAll(self.server_handler)
 
+
         # Assign error handling function.
         self.tws_conn.register(self.error_handler, 'Error')
+    def start_info(self, conect_ib):
+        account_info.__init__(account_info)
+        connect_ib.connect(connect_ib)
+        self.tws_conn = connect_ib.tws_conn
+        self.tws_conn.registerAll(self.server_handler)
+        time.sleep(1)
+        self.register_callback_functions()
+        time.sleep(1)
+        self.request_account_updates(self.account_code)
+        time.sleep(1)
+        self.monitor_position()
 
     def start(self, connect_ib):
         try:
-            connect_ib.__init__(connect_ib)
+            account_info.__init__(account_info)
+            #connect_ib.__init__(connect_ib)
 
             connect_ib.connect(connect_ib)
             self.tws_conn = connect_ib.tws_conn
+            self.tws_conn.registerAll(self.server_handler)
             time. sleep(1)
             self.register_callback_functions()
             time.sleep(1)
             self.request_account_updates(self.account_code)
             time.sleep(1)
             self.monitor_position()
-           
+            #print(self.order_ID, "tttttt")
             
         finally:
             connect_ib.disconnect(connect_ib)
