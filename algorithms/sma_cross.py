@@ -4,7 +4,10 @@ Created on Mon Oct 30 18:16:20 2017
 
 @author: Haimin
 """
+import sys
 
+sys.path.append('/home/haimin777/Quantum/IbPy_SMA/api')
+# sys.path.append('/home/haimin777/Quantum/IbPy_SMA/algorithms')
 import histData  # через него получаем исторические данные как датафрейм
 
 from order import OrderIB
@@ -14,24 +17,20 @@ from ib.opt import Connection, message, ibConnection
 
 import datetime
 from time import sleep
-from connect import connect_ib
+from connect import ConnectIB
 from account import AccountInfo
 
+
 class AccountIB:
-    def __init__(self, port=7496):
-        self.client_id = 100
-        self.port = port
+    def __init__(self):
         self.tws_conn = None
-        #self.account_code = None
         self.position = 0
         self.OpenOrders = 0
         self.statusOrder = None
         self.list1_orders = []  # Открытые ордера: Тикер и цена
-        self.pos_list = []  # Активные позиции: тикер, размер позиции, рыночная стоимость, цена
+        self.pos_list = []  #  Активные позиции: тикер, размер позиции, рыночная стоимость, цена
         self.list2_orders = list()  # Открытые ордера: Объем и статус
         self.current_order_status = None
-
-
 
     def cross_signal(self, data_loader):  # функция для определения пересечения
         # запрашиваем текущее время в нужном формате
@@ -70,20 +69,20 @@ class AccountIB:
                 self.ib_order = OrderIB.create_order("MKT", abs(self.position) + pos_volume, "SELL")
             return self.ib_order
 
-    def start(self, sec, connect_ib, AccountInfo):
+    def start(self, sec, ConnectIB, AccountInfo):
         try:
             # Запрашиваем и выводим информацию о позициях и ордерах перед запуском скрипта
             acc_inf = AccountInfo()
-            acc_inf.start_info(connect_ib)
+            acc_inf.start_info(ConnectIB)
             sleep(1)
-            tws = connect_ib.tws_conn
+            tws = ConnectIB.tws_conn
             data_loader = histData.Downloader(debug=False)
 
             while True:
-               # tws.registerAll(AccountInfo.position_handler)
-               # self.register_callback_functions()
+                # tws.registerAll(AccountInfo.position_handler)
+                # self.register_callback_functions()
                 # Расчитаем количество лотов, как баланс в тысячах (заходим на весь баланс без рычага)
-                #pos_volume = 1000
+                # pos_volume = 1000
                 pos_volume = int(float(acc_inf.balance) // 1000 * 100)
                 print("\n", "last placed order status:", "\n", self.current_order_status)
                 # Алгоритм системы
@@ -109,13 +108,13 @@ class AccountIB:
                   (acc_inf.position,
                    acc_inf.balance,
                    acc_inf.OpenOrders))
-            connect_ib.disconnect(connect_ib)
+            ConnectIB.disconnect(ConnectIB)
 
 
 if __name__ == "__main__":
-  #  system = AccountInfo()
-  #  system.start_info(connect_ib)
-  #  connect_ib.disconnect(connect_ib)
+    #  system = AccountInfo()
+    #  system.start_info(ConnectIB)
+    #  ConnectIB.disconnect(ConnectIB)
 
-   system = AccountIB()
-   system.start(20, connect_ib, AccountInfo)
+    system = AccountIB()
+    system.start(20, ConnectIB, AccountInfo)

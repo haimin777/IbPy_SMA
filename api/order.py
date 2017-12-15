@@ -2,6 +2,7 @@ from ib.ext.Contract import Contract
 from ib.ext.Order import Order
 from ib.opt import Connection
 
+
 class OrderIB:
     def __init__(self):
         self.quantyty = 0
@@ -13,10 +14,8 @@ class OrderIB:
     def error_handler(msg):
         print("Server Error:", msg)
 
-
     def server_handler(msg):
         print("Server Msg:", msg.typeName, "-", msg)
-
 
     def create_contract(symbol, sec_type, exch, curr):
         contract = Contract()
@@ -26,7 +25,6 @@ class OrderIB:
         contract.m_currency = curr
         return contract
 
-
     def create_order(order_type, quantity, action):
         order = Order()
         order.m_orderType = order_type
@@ -34,6 +32,7 @@ class OrderIB:
         order.m_action = action
 
         return order
+
 
 if __name__ == "__main__":
     client_id = 100
@@ -53,7 +52,7 @@ if __name__ == "__main__":
         tws_conn.registerAll(OrderIB.server_handler)
 
         # Create AAPL contract and send order
-        aapl_contract = OrderIB.create_contract('EUR', 'CASH','IDEALPRO','USD')
+        aapl_contract = OrderIB.create_contract('EUR', 'CASH', 'IDEALPRO', 'USD')
 
         # Go long 100 shares of AAPL
         aapl_order = OrderIB.create_order('MKT', 1001, 'SELL')

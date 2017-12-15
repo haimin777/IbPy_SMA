@@ -8,7 +8,8 @@ Created on Mon Oct 30 17:34:25 2017
 from ib.opt import Connection
 from time import sleep
 
-class connect_ib:
+
+class ConnectIB:
     def __init__(self):
         self.client_id = 100
         self.port = 7496
@@ -18,7 +19,7 @@ class connect_ib:
         try:
             self.__init__(self)
             self.tws_conn = Connection.create(port=self.port,
-                                     clientId=self.client_id)
+                                              clientId=self.client_id)
             self.tws_conn.connect()
 
         finally:
@@ -29,8 +30,9 @@ class connect_ib:
             self.tws_conn.disconnect()
             print("Disconnect OK")
 
+
 if __name__ == "__main__":
-    system = connect_ib()
+    system = ConnectIB()
     system.connect()
     sleep(1)
     system.disconnect()

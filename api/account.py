@@ -5,16 +5,12 @@ Created on Mon Oct 30 18:16:20 2017
 @author: Haimin
 """
 
-
-from ib.opt import Connection, message, ibConnection
 import time
-from connect import connect_ib
+from connect import ConnectIB
 
 
 class AccountInfo:
-
     def __init__(self):
-
         self.tws_conn = None
         self.account_code = None
         self.position = 0
@@ -40,9 +36,8 @@ class AccountInfo:
             self.current_order_status = msg.status
             sleep(1)
 
-
     def server_handler(self, msg):
-        #print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
+        # print("Server Msg:", msg.typeName, "-", msg) # Для отладки выводим все сообщения системы
 
         if msg.typeName == "updatePortfolio":
             self.position = msg.position
@@ -71,8 +66,8 @@ class AccountInfo:
             self.list1_orders.append(msg.order.m_lmtPrice)
 
         elif msg.typeName == "position":  # запрос позиций в торговом цикле
-           # print("POS here", "\n", msg.contract.m_symbol)
-            self.trade_pos_list.update({msg.contract.m_symbol :  msg.pos})
+            # print("POS here", "\n", msg.contract.m_symbol)
+            self.trade_pos_list.update({msg.contract.m_symbol: msg.pos})
 
 
         elif msg.typeName == "error" and msg.id != -1:
@@ -98,12 +93,10 @@ class AccountInfo:
         self.tws_conn.reqOpenOrders()
         self.tws_conn.registerAll(self.position_handler)
 
-
-        
     def error_handler(self, msg):
         if msg.typeName == "error" and msg.id != -1:
-            print ("Server Error:", msg)
-            
+            print("Server Error:", msg)
+
     def request_account_updates(self, account_code):
         self.tws_conn.reqAllOpenOrders()
         self.tws_conn.reqAccountUpdates(True, account_code)
@@ -112,13 +105,13 @@ class AccountInfo:
         # Assign server messages handling function.
         self.tws_conn.registerAll(self.server_handler)
 
-
         # Assign error handling function.
         self.tws_conn.register(self.error_handler, 'Error')
+
     def start_info(self, conect_ib):
         AccountInfo.__init__(AccountInfo)
-        connect_ib.connect(connect_ib)
-        self.tws_conn = connect_ib.tws_conn
+        ConnectIB.connect(ConnectIB)
+        self.tws_conn = ConnectIB.tws_conn
         self.tws_conn.registerAll(self.server_handler)
         time.sleep(1)
         self.register_callback_functions()
@@ -127,37 +120,35 @@ class AccountInfo:
         time.sleep(1)
         self.monitor_position()
 
-    def trade_positions(self):   #вывод позиций в процессе работы
+    def trade_positions(self):  # вывод позиций в процессе работы
         self.tws_conn.reqPositions()
         time.sleep(1)
         self.register_callback_functions()
         print(self.trade_pos_list)
         return self.trade_pos_list
 
-    def start(self, connect_ib):
+    def start(self, ConnectIB):
         try:
             AccountInfo.__init__(AccountInfo)
-            #connect_ib.__init__(connect_ib)
+            # ConnectIB.__init__(ConnectIB)
 
-            connect_ib.connect(connect_ib)
-            self.tws_conn = connect_ib.tws_conn
+            ConnectIB.connect(ConnectIB)
+            self.tws_conn = ConnectIB.tws_conn
             self.tws_conn.registerAll(self.server_handler)
 
             time.sleep(1)
             self.request_account_updates(self.account_code)
             time.sleep(1)
             self.monitor_position()
-            #print(self.order_ID, "tttttt")
+            # print(self.order_ID, "tttttt")
             self.trade_positions()
 
         finally:
-            connect_ib.disconnect(connect_ib)
-            print ("disconnected")
+            ConnectIB.disconnect(ConnectIB)
+            print("disconnected")
 
-        
+
 if __name__ == "__main__":
     system = AccountInfo()
-    system.start(connect_ib)
+    system.start(ConnectIB)
     print(system.trade_pos_list)
-
-    
