@@ -23,13 +23,6 @@ from account import AccountInfo
 
 class AccountIB:
     def __init__(self):
-        self.tws_conn = None
-        self.position = 0
-        self.OpenOrders = 0
-        self.statusOrder = None
-        self.list1_orders = []  # Открытые ордера: Тикер и цена
-        self.pos_list = []  #  Активные позиции: тикер, размер позиции, рыночная стоимость, цена
-        self.list2_orders = list()  # Открытые ордера: Объем и статус
         self.current_order_status = None
 
     def cross_signal(self, data_loader):  # функция для определения пересечения
@@ -50,21 +43,23 @@ class AccountIB:
         allow = ma_short > ma_long
         return allow
 
-    def trade_logic(self, data_loader, pos_volume):
+    def trade_logic(self, position, data_loader, pos_volume):
         allow = self.cross_signal(data_loader)  # Проверяем сигнал на вход
         print("allow: ", allow)
+        # Обновляем дынные по позициям
+
         if allow:  # проверка пересечения
             print("\n", "signal to open long position", "\n")
-            if self.position == 0:
+            if position == 0:
                 self.ib_order = OrderIB.create_order('MKT', pos_volume, 'BUY')
-            elif self.position < 0:  # выставляем ордер с учетом перекрытия текущей позиции
+            elif position < 0:  # выставляем ордер с учетом перекрытия текущей позиции
                 self.ib_order = OrderIB.create_order("MKT", abs(self.position) + pos_volume, "BUY")
             return self.ib_order
         elif not allow:
             print("\n", "signal to open short position", "\n")
-            if self.position == 0:
+            if position == 0:
                 self.ib_order = OrderIB.create_order('MKT', pos_volume, 'SELL')
-            elif self.position > 0:
+            elif position > 0:
                 # перворачиваем текущую длинную позицию
                 self.ib_order = OrderIB.create_order("MKT", abs(self.position) + pos_volume, "SELL")
             return self.ib_order
@@ -79,16 +74,13 @@ class AccountIB:
             data_loader = histData.Downloader(debug=False)
 
             while True:
-                # tws.registerAll(AccountInfo.position_handler)
-                # self.register_callback_functions()
-                # Расчитаем количество лотов, как баланс в тысячах (заходим на весь баланс без рычага)
-                # pos_volume = 1000
+                position = acc_inf.position
                 pos_volume = int(float(acc_inf.balance) // 1000 * 100)
                 print("\n", "last placed order status:", "\n", self.current_order_status)
                 # Алгоритм системы
 
                 tws.reqPositions()
-                self.trade_logic(data_loader, pos_volume)
+                self.trade_logic(position, data_loader, pos_volume)
 
                 try:
                     tws.placeOrder(acc_inf.order_ID,
@@ -107,7 +99,7 @@ class AccountIB:
                   'Open orders:%s' %
                   (acc_inf.position,
                    acc_inf.balance,
-                   acc_inf.OpenOrders))
+                   acc_inf.open_orders))
             ConnectIB.disconnect(ConnectIB)
 
 
