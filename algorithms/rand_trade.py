@@ -5,9 +5,7 @@ Created on Mon Oct 30 18:16:20 2017
 @author: Haimin
 """
 import sys
-
 sys.path.append('/home/haimin777/Quantum/IbPy_SMA/api')
-
 import random
 
 
