@@ -6,7 +6,7 @@ from ib.opt import Connection
 class OrderIB:
     def __init__(self):
         self.quantyty = 0
-        self.order_ID = 1
+        self.order_id = 1
 
     def error_handler(msg):
         print("Server Error:", msg)
