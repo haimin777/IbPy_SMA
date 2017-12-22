@@ -4,17 +4,16 @@ Created on Mon Oct 30 18:16:20 2017
 
 @author: Haimin
 """
-import sys
-sys.path.append('/home/haimin777/Quantum/IbPy_SMA/api')
+#import sys
+#sys.path.append('/home/haimin777/Quantum/IbPy_SMA/api')
 import random
-
 
 def logic_random(positions, pos_volume):
     if random.randint(0, 1):
         # let's trade
         pair = random.choice(['EUR', 'CHF', 'GBP'])
 
-        if positions[pair] == 0:
+        if positions.get(pair) == None or positions[pair] == 0:
             # позиция отсутствует, будем торговать в одном из направлений
             if random.randint(0, 1):
                 print('open long from zero for ', pair)

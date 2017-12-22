@@ -1,11 +1,7 @@
-import sys
-
-sys.path.append('/home/haimin777/Quantum/IbPy_SMA/api')
-sys.path.append('/home/haimin777/Quantum/IbPy_SMA/algorithms')
-from connect import ConnectIB
-from account import AccountInfo
-from rand_trade import logic_random
-from order import OrderIB
+from api.connect import ConnectIB
+from api.account import AccountInfo
+from api.order import OrderIB
+from algorithms.rand_trade import logic_random
 from time import sleep
 
 
@@ -25,10 +21,10 @@ def start(sec):
                                                "IDEALPRO",
                                                "USD")
             order = OrderIB.create_order(trade[1][0], trade[1][1], trade[1][2])
-            tws.placeOrder(acc_inf.order_ID,
+            tws.placeOrder(acc_inf.order_id,
                            contract,
                            order)
-            acc_inf.order_ID += 1
+            acc_inf.order_id += 1
             sleep(sec)
         else:
             sleep(sec)

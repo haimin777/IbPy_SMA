@@ -4,26 +4,20 @@ Created on Mon Oct 30 18:16:20 2017
 
 @author: Haimin
 """
-import sys
-
-sys.path.append('/home/haimin777/Quantum/IbPy_SMA/api')
-# sys.path.append('/home/haimin777/Quantum/IbPy_SMA/algorithms')
 import histData  # через него получаем исторические данные как датафрейм
-
-from order import OrderIB
-# from account import AccountIB
 import talib
-from ib.opt import Connection, message, ibConnection
-
 import datetime
 from time import sleep
-from connect import ConnectIB
-from account import AccountInfo
+from api.connect import ConnectIB
+from api.account import AccountInfo
+from api.order import OrderIB
+
 
 
 class AccountIB:
     def __init__(self):
         self.current_order_status = None
+        self.ib_order = None
 
     def cross_signal(self, data_loader):  # функция для определения пересечения
         # запрашиваем текущее время в нужном формате
@@ -83,10 +77,10 @@ class AccountIB:
                 self.trade_logic(position, data_loader, pos_volume)
 
                 try:
-                    tws.placeOrder(acc_inf.order_ID,
+                    tws.placeOrder(acc_inf.order_id,
                                    self.contract,
                                    self.ib_order)
-                    acc_inf.order_ID += 1
+                    acc_inf.order_id += 1
                 except AttributeError:
                     print("already placed")
                 finally:

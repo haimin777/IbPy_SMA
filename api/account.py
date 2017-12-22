@@ -6,7 +6,7 @@ Created on Mon Oct 30 18:16:20 2017
 """
 
 import time
-from connect import ConnectIB
+from api.connect import ConnectIB
 
 
 class AccountInfo:
@@ -26,7 +26,7 @@ class AccountInfo:
 
         if msg.typeName == "nextValidId":
             print("order id = ", msg.order_id)
-            self.order_ID = msg.orderId
+            self.order_id = msg.orderId
 
         elif msg.typeName == "orderStatus":
 
@@ -60,7 +60,7 @@ class AccountInfo:
 
         elif msg.typeName == "nextValidId":
             print("order id = ", msg.orderId)
-            self.order_ID = msg.orderId
+            self.order_id = msg.orderId
 
 
         elif msg.typeName == "position":  # запрос позиций в торговом цикле
@@ -130,8 +130,6 @@ class AccountInfo:
     def start(self, ConnectIB):
         try:
             AccountInfo.__init__(AccountInfo)
-            # ConnectIB.__init__(ConnectIB)
-
             ConnectIB.connect(ConnectIB)
             self.tws_conn = ConnectIB.tws_conn
             self.tws_conn.registerAll(self.server_handler)
@@ -140,7 +138,6 @@ class AccountInfo:
             self.request_account_updates(self.account_code)
             time.sleep(1)
             self.monitor_position()
-            # print(self.order_ID, "tttttt")
             self.trade_positions()
 
         finally:
